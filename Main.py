@@ -96,29 +96,43 @@ while True:
     if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
         if args.framerecord:
             framedata.recordframe(gamestate)
-        #XXX: This is where your AI does all of its stuff!
-        #This line will get hit once per frame, so here is where you read
-        #   in the gamestate and decide what buttons to push on the controller
         if args.framerecord:
             melee.techskill.upsmashes(ai_state=gamestate.ai_state, controller=controller1)
         else:
-            melee.techskill.multishine(ai_state=gamestate.ai_state, controller=controller1)
+            #print(gamestate.tolist())
+            if controller1.prev.button[melee.Button.BUTTON_Y]:
+                controller1.release_button(melee.Button.BUTTON_Y) 
+            else:
+                controller1.press_button(melee.Button.BUTTON_Y)
+            # if gamestate.ai_state.action == melee.enums.Action.               
+            #     controller1.press_button(melee.enums.Button.BUTTON_X)
+            # elif gamestate.ai_state.action == melee.enums.Action.FALLING:
+            #     controller1.press_button(melee.enums.Button.BUTTON_X)
+            # else:
+            #     controller1.empty_input()
+                
+            #melee.techskill.multishine(ai_state=gamestate.ai_state, controller=controller1)
     #If we're at the character select screen, choose our character
     elif gamestate.menu_state == melee.enums.Menu.CHARACTER_SELECT:
-        melee.menuhelper.choosecharacter(character=melee.enums.Character.FOX,
-                                        gamestate=gamestate,
-                                        port=args.port,
-                                        opponent_port=args.opponent,
-                                        controller=controller1,
-                                        swag=False,
-                                        start=False)
+        if gamestate.frame<100:
+            melee.menuhelper.changecontrollerstatus(controller=controller1,gamestate=gamestate,targetport=args.port,port=args.port,status=melee.enums.ControllerStatus.CONTROLLER_CPU)
+        else:
+            melee.menuhelper.choosecharacter(character=melee.enums.Character.MARTH,
+                                            gamestate=gamestate,
+                                            port=args.port,
+                                            opponent_port=args.opponent,
+                                            controller=controller1,
+                                            swag=False,
+                                            start=True)
+    
+        
         melee.menuhelper.choosecharacter(character=melee.enums.Character.MARTH,
                                         gamestate=gamestate,
                                         port=args.opponent,
                                         opponent_port=args.port,
                                         controller=controller2,
                                         swag=False,
-                                        start=True)                                
+                                        start=False)                                
     #If we're at the postgame scores screen, spam START
     elif gamestate.menu_state == melee.enums.Menu.POSTGAME_SCORES:
         melee.menuhelper.skippostgame(controller=controller1)
