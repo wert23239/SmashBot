@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+#Python Files
+__pycache__/*
+
+#Data Files
+Logs/*

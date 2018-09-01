@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 import melee
+import logger
+import menuhelper
 import argparse
 import signal
 import sys
@@ -26,7 +28,7 @@ parser.add_argument('--opponent', '-o', type=check_port,
 parser.add_argument('--live', '-l',
                     help='The opponent is playing live with a GCN Adapter',
                     default=True)
-parser.add_argument('--debug', '-d', action='store_true',
+parser.add_argument('--debug', '-d',default=True, action='store_true',
                     help='Debug mode. Creates a CSV of all game state')
 parser.add_argument('--framerecord', '-r', default=False, action='store_true',
                     help='(DEVELOPMENT ONLY) Records frame data from the match, stores into framedata.csv.')
@@ -35,7 +37,7 @@ args = parser.parse_args()
 
 log = None
 if args.debug:
-    log = melee.logger.Logger()
+    log = logger.Logger()
 
 framedata = melee.framedata.FrameData(args.framerecord)
 
@@ -85,6 +87,9 @@ supportedcharacters = [melee.enums.Character.PEACH, melee.enums.Character.CPTFAL
     melee.enums.Character.FOX, melee.enums.Character.SAMUS, melee.enums.Character.ZELDA, melee.enums.Character.SHEIK, \
     melee.enums.Character.PIKACHU, melee.enums.Character.JIGGLYPUFF, melee.enums.Character.MARTH]
 
+
+cpu_state=menuhelper.CpuState.UNSET
+cpu_char_state=menuhelper.CpuState.UNSET
 #Main loop
 while True:
     #"step" to the next frame
@@ -93,46 +98,34 @@ while True:
         print("WARNING: Last frame took " + str(gamestate.processingtime*1000) + "ms to process.")
 
     #What menu are we in?
-    if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
-        if args.framerecord:
-            framedata.recordframe(gamestate)
-        if args.framerecord:
-            melee.techskill.upsmashes(ai_state=gamestate.ai_state, controller=controller1)
-        else:
-            #print(gamestate.tolist())
-            if controller1.prev.button[melee.Button.BUTTON_Y]:
-                controller1.release_button(melee.Button.BUTTON_Y) 
-            else:
-                controller1.press_button(melee.Button.BUTTON_Y)
-            # if gamestate.ai_state.action == melee.enums.Action.               
-            #     controller1.press_button(melee.enums.Button.BUTTON_X)
-            # elif gamestate.ai_state.action == melee.enums.Action.FALLING:
-            #     controller1.press_button(melee.enums.Button.BUTTON_X)
-            # else:
-            #     controller1.empty_input()
-                
-            #melee.techskill.multishine(ai_state=gamestate.ai_state, controller=controller1)
+    # if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
+    #     # if args.framerecord:
+    #     #     framedata.recordframe(gamestate)
+    #     # if args.framerecord:
+    #     #     melee.techskill.upsmashes(ai_state=gamestate.ai_state, controller=controller1)
+    #     # else:
+    #     #     if controller1.prev.button[melee.Button.BUTTON_Y]:
+    #     #         controller1.release_button(melee.Button.BUTTON_Y) 
+    #     #     else:
+    #             controller1.press_button(melee.Button.BUTTON_Y)
     #If we're at the character select screen, choose our character
     elif gamestate.menu_state == melee.enums.Menu.CHARACTER_SELECT:
-        if gamestate.frame<100:
-            melee.menuhelper.changecontrollerstatus(controller=controller1,gamestate=gamestate,targetport=args.port,port=args.port,status=melee.enums.ControllerStatus.CONTROLLER_CPU)
-        else:
-            melee.menuhelper.choosecharacter(character=melee.enums.Character.MARTH,
-                                            gamestate=gamestate,
-                                            port=args.port,
-                                            opponent_port=args.opponent,
-                                            controller=controller1,
-                                            swag=False,
-                                            start=True)
-    
-        
-        melee.menuhelper.choosecharacter(character=melee.enums.Character.MARTH,
-                                        gamestate=gamestate,
-                                        port=args.opponent,
-                                        opponent_port=args.port,
-                                        controller=controller2,
-                                        swag=False,
-                                        start=False)                                
+        cpu_state=menuhelper.set_cpu_character(
+                        controller=controller1,
+                        character=melee.enums.Character.MARTH,
+                        gamestate=gamestate,
+                        port=args.port,
+                        opponent_port=args.opponent,
+                        level=9,
+                        cpu_state=cpu_state)           
+        cpu_char_state=menuhelper.set_cpu_character(
+                        controller=controller2,
+                        character=melee.enums.Character.MARTH,
+                        gamestate=gamestate,
+                        port=args.opponent,
+                        opponent_port=args.port,
+                        level=9,
+                        cpu_state=cpu_char_state)                                      
     #If we're at the postgame scores screen, spam START
     elif gamestate.menu_state == melee.enums.Menu.POSTGAME_SCORES:
         melee.menuhelper.skippostgame(controller=controller1)
@@ -144,6 +137,6 @@ while True:
     #Flush any button presses queued up
     controller1.flush()
     controller2.flush()
-    if log:
+    if log and gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
         log.logframe(gamestate)
         log.writeframe()
