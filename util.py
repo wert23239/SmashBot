@@ -16,8 +16,6 @@ class Util:
         x_cord=random.choice(self.x_list)
         y_cord=random.choice(self.y_list)
         button_choice=random.choice(self.button_list)
-        #print(x_cord,y_cord,button_choice)
-        #print(self.convert_attack(x_cord,y_cord,button_choice))
         controller.simple_press(x_cord,y_cord,button_choice)
         if self.logger:
             self.logger.log("Buttons Pressed Converted", self.convert_attack(x_cord,y_cord,button_choice),concat="True")  

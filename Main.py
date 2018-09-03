@@ -139,6 +139,7 @@ while True:
     #Flush any button presses queued up
     controller1.flush()
     controller2.flush()
-    if log and gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
+    if (log and 
+        gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]):
         log.log_frame(gamestate)
         log.write_frame()

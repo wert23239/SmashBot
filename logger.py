@@ -2,7 +2,7 @@ import csv
 import time
 import datetime
 import os
-from melee.enums import Action
+from melee.enums import Action,Menu
 
 class Logger:
     def __init__(self):
@@ -14,14 +14,19 @@ class Logger:
         self.csvfile = open('Logs/stats.csv', 'w')
         fieldnames = ['Frame', 'Opponent x',
             'Opponent y', 'AI x', 'AI y', 'Opponent Facing', 'AI Facing',
-            'Opponent Action', 'AI Action', 'Opponent Action Frame', 'AI Action Frame',
-            'Opponent Jumps Left', 'AI Jumps Left', 'Opponent Stock', 'AI Stock',
-            'Opponent Percent', 'AI Percent', 'Buttons Pressed','Buttons Pressed Converted' ,'Notes', 'Frame Process Time']
+            'Opponent Action','Opponent Action Num' ,'AI Action','AI Action Num', 
+            'Opponent Action Frame', 'AI Action Frame','Opponent Jumps Left', 'AI Jumps Left', 
+            'Opponent Stock', 'AI Stock','Opponent Percent', 'AI Percent', 
+            'Opponent Percent Change', 'AI Percent Change', 
+            'Buttons Pressed', 'Buttons Pressed Converted' ,'Notes', 'Frame Process Time']
         self.writer = csv.DictWriter(self.csvfile, fieldnames=fieldnames, extrasaction='ignore')
         self.current_row = dict()
         self.rows = []
         self.filename = self.csvfile.name
         self.action_map= self.create_action_map()
+        # These needed to be shifted up 1
+        self.past_opponent_percent=0
+        self.past_ai_percent=0
 
     def log(self, column, contents, concat=False):
         #Should subsequent logs be cumulative?
@@ -35,6 +40,9 @@ class Logger:
 
     #Log any common per-frame items
     def log_frame(self, gamestate):
+        if gamestate.menu_state not in [Menu.IN_GAME, Menu.SUDDEN_DEATH]:
+            self.past_opponent_percent = 0
+            self.past_ai_percent = 0
         ai_state = gamestate.ai_state
         opponent_state = gamestate.opponent_state
 
@@ -46,7 +54,9 @@ class Logger:
         self.log('Opponent Facing', str(opponent_state.facing))
         self.log('AI Facing', str(ai_state.facing))
         self.log('Opponent Action', str(opponent_state.action))
+        self.log('Opponent Action Num', str(Action(opponent_state.action).value))
         self.log('AI Action', str(ai_state.action))
+        self.log('AI Action Num', str(Action(ai_state.action).value))
         self.log('Opponent Action Frame', str(opponent_state.action_frame))
         self.log('AI Action Frame', str(ai_state.action_frame))
         self.log('Opponent Jumps Left', str(opponent_state.jumps_left))
@@ -55,6 +65,10 @@ class Logger:
         self.log('AI Stock', str(ai_state.stock))
         self.log('Opponent Percent', str(opponent_state.percent))
         self.log('AI Percent', str(ai_state.percent))
+        self.log('Opponent Percent Change', str(opponent_state.percent-self.past_opponent_percent))
+        self.log('AI Percent Change', str(ai_state.percent-self.past_ai_percent))
+        self.past_opponent_percent=opponent_state.percent
+        self.past_ai_percent=ai_state.percent
 
     def write_frame(self):
         self.rows.append(self.current_row)
