@@ -2,6 +2,7 @@ import csv
 import time
 import datetime
 import os
+from melee.enums import Action
 
 class Logger:
     def __init__(self):
@@ -9,16 +10,18 @@ class Logger:
         #Create the Pipes directory if it doesn't already exist
         if not os.path.exists("Logs/"):
             os.makedirs("Logs/")
-        self.csvfile = open('Logs/' + str(timestamp) + '.csv', 'w')
+        #self.csvfile = open('Logs/' + str(timestamp) + '.csv', 'w')
+        self.csvfile = open('Logs/stats.csv', 'w')
         fieldnames = ['Frame', 'Opponent x',
             'Opponent y', 'AI x', 'AI y', 'Opponent Facing', 'AI Facing',
             'Opponent Action', 'AI Action', 'Opponent Action Frame', 'AI Action Frame',
             'Opponent Jumps Left', 'AI Jumps Left', 'Opponent Stock', 'AI Stock',
-            'Opponent Percent', 'AI Percent', 'Buttons Pressed', 'Notes', 'Frame Process Time']
+            'Opponent Percent', 'AI Percent', 'Buttons Pressed','Buttons Pressed Converted' ,'Notes', 'Frame Process Time']
         self.writer = csv.DictWriter(self.csvfile, fieldnames=fieldnames, extrasaction='ignore')
         self.current_row = dict()
         self.rows = []
         self.filename = self.csvfile.name
+        self.action_map= self.create_action_map()
 
     def log(self, column, contents, concat=False):
         #Should subsequent logs be cumulative?
@@ -31,7 +34,7 @@ class Logger:
             self.current_row[column] = contents
 
     #Log any common per-frame items
-    def logframe(self, gamestate):
+    def log_frame(self, gamestate):
         ai_state = gamestate.ai_state
         opponent_state = gamestate.opponent_state
 
@@ -53,10 +56,60 @@ class Logger:
         self.log('Opponent Percent', str(opponent_state.percent))
         self.log('AI Percent', str(ai_state.percent))
 
-    def writeframe(self):
+    def write_frame(self):
         self.rows.append(self.current_row)
         self.current_row = dict()
 
-    def writelog(self):
+    def write_log(self):
         self.writer.writeheader()
         self.writer.writerows(self.rows)
+
+    def create_action_map(self):
+        action_map={}
+        for name, _ in Action.__members__.items():
+            if "DEAD" in name:
+                action_map["DEAD"]=name
+            elif "WALK" in name:
+                action_map["MOVE"]=name   
+            elif ("ITEM" in name or "NESS" in name or 
+                  "FOX" in name or "THROWN" in name or
+                 "BEAM" in name or "DAMAGE" in name or
+                 "TECH" in name):
+                action_map["VOID"]=name    
+            elif ("FSMASH" in name or 
+                  "FAIR" in name or 
+                  "FTILT" in name or 
+                  "NEUTRAL_ATTACK_2" in name):
+                action_map["FOWARD_A"] = name
+            elif ("BSMASH" in name or 
+                  "BAIR" in name or 
+                  "BTILT" in name or
+                  "NEUTRAL_ATTACK_3" in name):    
+                action_map["BACK_A"] = name
+            elif "NAIR" in name or "NEUTRAL_ATTACK_1" in name:
+                action_map["NEUTRAL_A"] = name
+            elif "UPSMASH" in name or "UPTILT" in name:
+                action_map["UP_A"] = name
+            elif "NEUTRAL_B" in name:
+                action_map["NETURAL_B"]=name    
+            elif "DOWN_B" in name:
+                action_map["DOWN_B"]=name   
+            elif "UP_B" in name:
+                action_map["UP_B"]=name   
+            elif "SWORD_DANCE" in name:
+                action_map["SWORD_DANCE"]=name    
+            elif "THROW_" in name:
+                action_map[name] = name
+            elif "SHIELD" in name:
+                action_map["SHEILD"] = name
+            elif "DODGE" in name:
+                action_map["DODGE"] = name
+            elif "EDGE" in name:
+                action_map["EDGE"] = name
+            elif "JUMP" in name:
+                action_map["JUMP"] = name
+            else:
+                action_map[name]=name
+        return action_map    
+
+

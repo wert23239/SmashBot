@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import melee
+import util
 import logger
 import menuhelper
 import argparse
@@ -62,7 +63,7 @@ controller2 = melee.controller.Controller(port=args.opponent, dolphin=dolphin)
 def signal_handler(signal, frame):
     dolphin.terminate()
     if args.debug:
-        log.writelog()
+        log.write_log()
         print("") #because the ^C will be on the terminal
         print("Log file created: " + log.filename)
     print("Shutting down cleanly...")
@@ -90,6 +91,8 @@ supportedcharacters = [melee.enums.Character.PEACH, melee.enums.Character.CPTFAL
 
 cpu_state=menuhelper.CpuState.UNSET
 cpu_char_state=menuhelper.CpuState.UNSET
+is_ai=True
+util=util.Util(dolphin.logger)
 #Main loop
 while True:
     #"step" to the next frame
@@ -97,27 +100,26 @@ while True:
     if(gamestate.processingtime * 1000 > 12):
         print("WARNING: Last frame took " + str(gamestate.processingtime*1000) + "ms to process.")
 
-    #What menu are we in?
-    # if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
-    #     # if args.framerecord:
-    #     #     framedata.recordframe(gamestate)
-    #     # if args.framerecord:
-    #     #     melee.techskill.upsmashes(ai_state=gamestate.ai_state, controller=controller1)
-    #     # else:
-    #     #     if controller1.prev.button[melee.Button.BUTTON_Y]:
-    #     #         controller1.release_button(melee.Button.BUTTON_Y) 
-    #     #     else:
-    #             controller1.press_button(melee.Button.BUTTON_Y)
+    if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
+        util.do_random_attack(controller=controller1)
     #If we're at the character select screen, choose our character
     elif gamestate.menu_state == melee.enums.Menu.CHARACTER_SELECT:
-        cpu_state=menuhelper.set_cpu_character(
-                        controller=controller1,
-                        character=melee.enums.Character.MARTH,
-                        gamestate=gamestate,
-                        port=args.port,
-                        opponent_port=args.opponent,
-                        level=9,
-                        cpu_state=cpu_state)           
+        if is_ai:
+            menuhelper.set_ai_character(
+                            controller=controller1,
+                            character=melee.enums.Character.MARTH,
+                            gamestate=gamestate,
+                            port=args.port,
+                            opponent_port=args.opponent)        
+        else:
+            cpu_state=menuhelper.set_cpu_character(
+                            controller=controller1,
+                            character=melee.enums.Character.MARTH,
+                            gamestate=gamestate,
+                            port=args.port,
+                            opponent_port=args.opponent,
+                            level=9,
+                            cpu_state=cpu_state)           
         cpu_char_state=menuhelper.set_cpu_character(
                         controller=controller2,
                         character=melee.enums.Character.MARTH,
@@ -138,5 +140,5 @@ while True:
     controller1.flush()
     controller2.flush()
     if log and gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
-        log.logframe(gamestate)
-        log.writeframe()
+        log.log_frame(gamestate)
+        log.write_frame()
