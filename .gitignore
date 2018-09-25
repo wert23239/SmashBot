@@ -33,6 +33,9 @@
 
 #Python Files
 __pycache__/*
+.ipynb*
 
 #Data Files
 Logs/*
+*.json
+*.h5

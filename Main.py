@@ -93,15 +93,22 @@ cpu_state=menuhelper.CpuState.UNSET
 cpu_char_state=menuhelper.CpuState.UNSET
 is_ai=True
 util=util.Util(dolphin.logger)
+data_frame=0
+total_data_frames=0
+random=False
 #Main loop
 while True:
     #"step" to the next frame
     gamestate.step()
     if(gamestate.processingtime * 1000 > 12):
-        print("WARNING: Last frame took " + str(gamestate.processingtime*1000) + "ms to process.")
+        pass
+        #print("WARNING: Last frame took " + str(gamestate.processingtime*1000) + "ms to process.")
 
     if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
-        util.do_random_attack(controller=controller1)
+        if random:
+            util.do_random_attack(controller=controller1)
+        else:
+            util.do_model_attack(controller=controller1,gamestate=gamestate)    
     #If we're at the character select screen, choose our character
     elif gamestate.menu_state == melee.enums.Menu.CHARACTER_SELECT:
         if is_ai:
@@ -143,3 +150,12 @@ while True:
         gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]):
         log.log_frame(gamestate)
         log.write_frame()
+        data_frame+=1
+        if data_frame>=10000:
+            log.write_log()
+            log.rows.clear()
+            total_data_frames+=data_frame
+            print("Total Frames collected so far:",total_data_frames)
+            data_frame=0
+
+            

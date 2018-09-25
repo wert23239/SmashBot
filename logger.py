@@ -11,19 +11,20 @@ class Logger:
         if not os.path.exists("Logs/"):
             os.makedirs("Logs/")
         #self.csvfile = open('Logs/' + str(timestamp) + '.csv', 'w')
-        self.csvfile = open('Logs/stats.csv', 'w')
-        fieldnames = ['Frame', 'Opponent x',
-            'Opponent y', 'AI x', 'AI y', 'Opponent Facing', 'AI Facing',
-            'Opponent Action','Opponent Action Num' ,'AI Action','AI Action Num', 
-            'Opponent Action Frame', 'AI Action Frame','Opponent Jumps Left', 'AI Jumps Left', 
-            'Opponent Stock', 'AI Stock','Opponent Percent', 'AI Percent', 
-            'Opponent Percent Change', 'AI Percent Change', 
-            'Buttons Pressed', 'Buttons Pressed Converted' ,'Notes', 'Frame Process Time']
+        self.csvfile = open('Logs/stats_test.csv', 'w')
+        fieldnames = ['Frame', 'Opponent_x',
+            'Opponent_y', 'AI_x', 'AI_y', 'Opponent_Facing', 'AI_Facing',
+            'Opponent_Action','Opponent_Action_Num' ,'AI_Action','AI_Action_Num', 
+            'Opponent_Action_Frame', 'AI_Action_Frame','Opponent_Jumps_Left', 'AI_Jumps_Left', 
+            'Opponent_Stock', 'AI_Stock','Opponent_Percent', 'AI_Percent', 
+            'Opponent_Percent_Change', 'AI_Percent_Change', 
+            'Buttons Pressed', 'Buttons_Pressed_Converted' ,'Notes', 'Frame Process Time']
         self.writer = csv.DictWriter(self.csvfile, fieldnames=fieldnames, extrasaction='ignore')
         self.current_row = dict()
         self.rows = []
         self.filename = self.csvfile.name
         self.action_map= self.create_action_map()
+        self.write_log_initial()
         # These needed to be shifted up 1
         self.past_opponent_percent=0
         self.past_ai_percent=0
@@ -47,26 +48,26 @@ class Logger:
         opponent_state = gamestate.opponent_state
 
         self.log('Frame', gamestate.frame)
-        self.log('Opponent x', str(opponent_state.x))
-        self.log('Opponent y', str(opponent_state.y))
-        self.log('AI x', str(ai_state.x))
-        self.log('AI y', str(ai_state.y))
-        self.log('Opponent Facing', str(opponent_state.facing))
-        self.log('AI Facing', str(ai_state.facing))
-        self.log('Opponent Action', str(opponent_state.action))
-        self.log('Opponent Action Num', str(Action(opponent_state.action).value))
-        self.log('AI Action', str(ai_state.action))
-        self.log('AI Action Num', str(Action(ai_state.action).value))
-        self.log('Opponent Action Frame', str(opponent_state.action_frame))
-        self.log('AI Action Frame', str(ai_state.action_frame))
-        self.log('Opponent Jumps Left', str(opponent_state.jumps_left))
-        self.log('AI Jumps Left', str(ai_state.jumps_left))
-        self.log('Opponent Stock', str(opponent_state.stock))
-        self.log('AI Stock', str(ai_state.stock))
-        self.log('Opponent Percent', str(opponent_state.percent))
-        self.log('AI Percent', str(ai_state.percent))
-        self.log('Opponent Percent Change', str(opponent_state.percent-self.past_opponent_percent))
-        self.log('AI Percent Change', str(ai_state.percent-self.past_ai_percent))
+        self.log('Opponent_x', str(opponent_state.x))
+        self.log('Opponent_y', str(opponent_state.y))
+        self.log('AI_x', str(ai_state.x))
+        self.log('AI_y', str(ai_state.y))
+        self.log('Opponent_Facing', str(opponent_state.facing))
+        self.log('AI_Facing', str(ai_state.facing))
+        self.log('Opponent_Action', str(opponent_state.action))
+        self.log('Opponent_Action_Num', str(Action(opponent_state.action).value))
+        self.log('AI_Action', str(ai_state.action))
+        self.log('AI_Action_Num', str(Action(ai_state.action).value))
+        self.log('Opponent_Action_Frame', str(opponent_state.action_frame))
+        self.log('AI_Action_Frame', str(ai_state.action_frame))
+        self.log('Opponent_Jumps_Left', str(opponent_state.jumps_left))
+        self.log('AI_Jumps_Left', str(ai_state.jumps_left))
+        self.log('Opponent_Stock', str(opponent_state.stock))
+        self.log('AI_Stock', str(ai_state.stock))
+        self.log('Opponent_Percent', str(opponent_state.percent))
+        self.log('AI_Percent', str(ai_state.percent))
+        self.log('Opponent_Percent_Change', str(opponent_state.percent-self.past_opponent_percent))
+        self.log('AI_Percent_Change', str(ai_state.percent-self.past_ai_percent))
         self.past_opponent_percent=opponent_state.percent
         self.past_ai_percent=ai_state.percent
 
@@ -74,8 +75,10 @@ class Logger:
         self.rows.append(self.current_row)
         self.current_row = dict()
 
-    def write_log(self):
+    def write_log_initial(self):
         self.writer.writeheader()
+
+    def write_log(self):
         self.writer.writerows(self.rows)
 
     def create_action_map(self):
