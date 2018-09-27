@@ -92,10 +92,14 @@ supportedcharacters = [melee.enums.Character.PEACH, melee.enums.Character.CPTFAL
 cpu_state=menuhelper.CpuState.UNSET
 cpu_char_state=menuhelper.CpuState.UNSET
 is_ai=True
-util=util.Util(dolphin.logger)
+is_ai_2=True
+util1=util.Util(dolphin.logger,controller1,['model1.json',"model1.h5"])
+util2=util.Util(dolphin.logger,controller2,['model2.json',"model2.h5"])
 data_frame=0
 total_data_frames=0
 random=False
+if is_ai==True and is_ai_2==True:
+    score1,score2=0,0
 #Main loop
 while True:
     #"step" to the next frame
@@ -106,9 +110,14 @@ while True:
 
     if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
         if random:
-            util.do_random_attack(controller=controller1)
+            util1.do_random_attack()
+            util2.do_random_attack()
+            
         else:
-            util.do_model_attack(controller=controller1,gamestate=gamestate)    
+            #util1.do_model_attack(gamestate,gamestate.ai_state,gamestate.opponent_state) 
+            util2.do_model_attack(gamestate,gamestate.opponent_state,gamestate.ai_state)    
+            util1.do_model_attack(gamestate,gamestate.opponent_state,gamestate.ai_state)    
+
     #If we're at the character select screen, choose our character
     elif gamestate.menu_state == melee.enums.Menu.CHARACTER_SELECT:
         if is_ai:
@@ -126,18 +135,27 @@ while True:
                             port=args.port,
                             opponent_port=args.opponent,
                             level=9,
-                            cpu_state=cpu_state)           
-        cpu_char_state=menuhelper.set_cpu_character(
-                        controller=controller2,
-                        character=melee.enums.Character.MARTH,
-                        gamestate=gamestate,
-                        port=args.opponent,
-                        opponent_port=args.port,
-                        level=9,
-                        cpu_state=cpu_char_state)                                      
+                            cpu_state=cpu_state) 
+        if is_ai_2:
+            menuhelper.set_ai_character(
+                                        controller=controller2,
+                                        character=melee.enums.Character.MARTH,
+                                        gamestate=gamestate,
+                                        port=args.opponent,
+                                        opponent_port=args.port)  
+        else:                                  
+            cpu_char_state=menuhelper.set_cpu_character(
+                            controller=controller2,
+                            character=melee.enums.Character.MARTH,
+                            gamestate=gamestate,
+                            port=args.opponent,
+                            opponent_port=args.port,
+                            level=9,
+                            cpu_state=cpu_char_state)                                      
     #If we're at the postgame scores screen, spam START
     elif gamestate.menu_state == melee.enums.Menu.POSTGAME_SCORES:
         melee.menuhelper.skippostgame(controller=controller1)
+        melee.menuhelper.skippostgame(controller=controller2)
     #If we're at the stage select screen, choose a stage
     elif gamestate.menu_state == melee.enums.Menu.STAGE_SELECT:
         melee.menuhelper.choosestage(stage=melee.enums.Stage.POKEMON_STADIUM,

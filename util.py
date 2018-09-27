@@ -7,7 +7,7 @@ from keras_pandas.Automater import Automater
 from keras.models import model_from_json
 class Util:
 
-    def __init__(self,logger=None):
+    def __init__(self,logger=None,controller=None,config=None):
         self.x_list=[0,.25,.5,.75,1]
         self.y_list=[0,.25,.5,.75,1]
         BUTTONS=melee.Button
@@ -22,31 +22,37 @@ class Util:
                 "Opponent_Stock","AI_Stock",
                 "Opponent_Percent","AI_Percent","Buttons_Pressed_Converted"]
         self.model=[]
-        self.create_model()
+        self.controller=controller
+        if config:
+            self.model_stucture=config[0]
+            self.model_weights=config[1]
+            self.create_model()
+        
+       
         
     def create_model(self):
-        json_file = open('model.json', 'r')
+        json_file = open(self.model_stucture, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         self.model = model_from_json(loaded_model_json)
-        self.model.load_weights("my_model_weights.h5")
+        self.model.load_weights(self.model_weights)
 
 
-    def do_random_attack(self,controller):
+    def do_random_attack(self):
         x_cord=random.choice(self.x_list)
         y_cord=random.choice(self.y_list)
         button_choice=random.choice(self.button_list)
-        controller.simple_press(x_cord,y_cord,button_choice)
+        self.controller.simple_press(x_cord,y_cord,button_choice)
         if self.logger:
             self.logger.log("Buttons_Pressed_Converted", self.convert_attack(x_cord,y_cord,button_choice),concat="True")  
 
-    def do_model_attack(self,controller,gamestate):
-        processed_input,processed_action = self.preprocess_input(gamestate)
+    def do_model_attack(self,gamestate,ai_state,opponent_state):
+        processed_input,processed_action = (
+            self.preprocess_input(gamestate,ai_state,opponent_state))
         action_values=self.model.predict([processed_input,processed_action])
         action=np.argmax(action_values)
-        print(action)
         x_cord,y_cord,button_choice=self.unconvert_attack(action)
-        controller.simple_press(x_cord,y_cord,button_choice)
+        self.controller.simple_press(x_cord,y_cord,button_choice)
         if self.logger:
             self.logger.log("Buttons_Pressed_Converted", self.convert_attack(x_cord,y_cord,button_choice),concat="True")          
 
@@ -59,14 +65,12 @@ class Util:
     def unconvert_attack(self,action):
         button_choice=action//25
         action=action%25
-        y_cord=action//5*.25
+        y_cord=action//5
         action=action%5
-        x_cord=action//5*.25
-        return x_cord,y_cord,self.button_list[button_choice]  
+        x_cord=action
+        return self.x_list[x_cord],self.y_list[y_cord],self.button_list[button_choice]  
 
-    def preprocess_input(self,gamestate):
-        ai_state = gamestate.ai_state
-        opponent_state = gamestate.opponent_state
+    def preprocess_input(self,gamestate,ai_state,opponent_state):
         df= pd.DataFrame({
             'Frame':[gamestate.frame],
             'Opponent_x':[(opponent_state.x)],
@@ -90,8 +94,4 @@ class Util:
         df_test=df.head(1)
         result=df.head(1).astype(float).values
         result=np.tile(result,(149,1))
-        #df=df_test.append([df_test.head(1)]*149,ignore_index=True)
-        # # Change to all actions
-        # df['Buttons_Pressed_Converted'] = df.apply (lambda row:row.name,axis=1)
-        #return 0
         return result,np.array(range(149))
