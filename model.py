@@ -62,7 +62,7 @@ def linear_model(df):
     # Train model
     history=model.fit([X_train,action_train], Y_train, epochs=100,validation_split=.2,verbose=1)
     json_string = model.to_json()
-    with open("model3.json", "w") as json_file:
+    with open("model_fake.json", "w") as json_file:
         json_file.write(json_string)
         model.save_weights('model3.h5')  
 

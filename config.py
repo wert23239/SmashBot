@@ -25,7 +25,6 @@ class Config():
         return action
 
     def binary_attack(self,model,processed_input,processed_action):
-        print(model.get_weights()[0][0][0::3])
         action_values=model.predict([processed_input,processed_action])
         action=argmax(action_values)
         return action

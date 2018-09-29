@@ -93,17 +93,17 @@ supportedcharacters = [melee.enums.Character.PEACH, melee.enums.Character.CPTFAL
 cpu_state=menuhelper.CpuState.UNSET
 cpu_char_state=menuhelper.CpuState.UNSET
 is_ai=True
-is_ai_2=True
+is_ai_2=False
 
 if is_ai:
     util1=util.Util(dolphin.logger,
                     controller1,
-                    config.Config('model1.json',"model1.h5",config.ModelType.BINARY))
+                    config.Config('model3.json',"model3.h5",config.ModelType.BINARY))
 
 if is_ai_2:                    
     util2=util.Util(dolphin.logger,
                     controller2,
-                    config.Config('model2.json',"model2.h5",config.ModelType.BINARY))
+                    config.Config('model3.json',"model3.h5",config.ModelType.BINARY))
 
 if is_ai==True and is_ai_2==True:
     score1,score2=0,0

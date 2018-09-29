@@ -24,9 +24,7 @@ class Util:
         loaded_model_json = json_file.read()
         json_file.close()
         self.model = model_from_json(loaded_model_json)
-        print(self.model.get_weights()[0][0][0::3])
         self.model.load_weights(self.config.model_weights)
-        print(self.model.get_weights()[0][0][0::3])
 
     def do_attack(self,gamestate,ai_state,opponent_state):
         processed_input,processed_action = (
