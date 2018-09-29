@@ -1,7 +1,7 @@
 import melee
-import random
 import pandas as pd
 import numpy as np
+from melee import Button
 from melee.enums import Action
 from keras_pandas.Automater import Automater
 from keras.models import model_from_json
@@ -10,48 +10,31 @@ class Util:
     def __init__(self,logger=None,controller=None,config=None):
         self.x_list=[0,.25,.5,.75,1]
         self.y_list=[0,.25,.5,.75,1]
-        BUTTONS=melee.Button
-        self.button_list=[BUTTONS.BUTTON_A, BUTTONS.BUTTON_B,
-                          BUTTONS.BUTTON_L, BUTTONS.BUTTON_Y,
-                          BUTTONS.BUTTON_Z, None]
+        self.button_list=[Button.BUTTON_A, Button.BUTTON_B,
+                          Button.BUTTON_L, Button.BUTTON_Y,
+                          Button.BUTTON_Z, None]
         self.logger=logger     
-        self.categorical_vars=["Opponent_Facing","AI_Facing","target"] 
-        self.numerical_vars=["Frame","Opponent_x","Opponent_y","AI_x","AI_y",
-                "Opponent_Action_Num","AI_Action_Num","AI_Action_Frame",
-                "Opponent_Action_Frame","Opponent_Jumps_Left", "AI_Jumps_Left",
-                "Opponent_Stock","AI_Stock",
-                "Opponent_Percent","AI_Percent","Buttons_Pressed_Converted"]
-        self.model=[]
         self.controller=controller
-        if config:
-            self.model_stucture=config[0]
-            self.model_weights=config[1]
-            self.create_model()
-        
+        self.config=config
+        self.create_model()
        
         
     def create_model(self):
-        json_file = open(self.model_stucture, 'r')
+        json_file = open(self.config.model_stucture, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         self.model = model_from_json(loaded_model_json)
-        self.model.load_weights(self.model_weights)
+        print(self.model.get_weights()[0][0][0::3])
+        self.model.load_weights(self.config.model_weights)
+        print(self.model.get_weights()[0][0][0::3])
 
-
-    def do_random_attack(self):
-        x_cord=random.choice(self.x_list)
-        y_cord=random.choice(self.y_list)
-        button_choice=random.choice(self.button_list)
-        self.controller.simple_press(x_cord,y_cord,button_choice)
-        if self.logger:
-            self.logger.log("Buttons_Pressed_Converted", self.convert_attack(x_cord,y_cord,button_choice),concat="True")  
-
-    def do_model_attack(self,gamestate,ai_state,opponent_state):
+    def do_attack(self,gamestate,ai_state,opponent_state):
         processed_input,processed_action = (
             self.preprocess_input(gamestate,ai_state,opponent_state))
-        action_values=self.model.predict([processed_input,processed_action])
-        action=np.argmax(action_values)
+        action=self.config.model_predict(self.model,processed_input,processed_action)
+       
         x_cord,y_cord,button_choice=self.unconvert_attack(action)
+
         self.controller.simple_press(x_cord,y_cord,button_choice)
         if self.logger:
             self.logger.log("Buttons_Pressed_Converted", self.convert_attack(x_cord,y_cord,button_choice),concat="True")          

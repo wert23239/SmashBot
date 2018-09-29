@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import melee
+import config
 import util
 import logger
 import menuhelper
@@ -93,13 +94,23 @@ cpu_state=menuhelper.CpuState.UNSET
 cpu_char_state=menuhelper.CpuState.UNSET
 is_ai=True
 is_ai_2=True
-util1=util.Util(dolphin.logger,controller1,['model1.json',"model1.h5"])
-util2=util.Util(dolphin.logger,controller2,['model2.json',"model2.h5"])
-data_frame=0
-total_data_frames=0
-random=False
+
+if is_ai:
+    util1=util.Util(dolphin.logger,
+                    controller1,
+                    config.Config('model1.json',"model1.h5",config.ModelType.BINARY))
+
+if is_ai_2:                    
+    util2=util.Util(dolphin.logger,
+                    controller2,
+                    config.Config('model2.json',"model2.h5",config.ModelType.BINARY))
+
 if is_ai==True and is_ai_2==True:
     score1,score2=0,0
+
+
+data_frame=0
+total_data_frames=0
 #Main loop
 while True:
     #"step" to the next frame
@@ -109,15 +120,11 @@ while True:
         #print("WARNING: Last frame took " + str(gamestate.processingtime*1000) + "ms to process.")
 
     if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
-        if random:
-            util1.do_random_attack()
-            util2.do_random_attack()
+        if is_ai:
+            util1.do_attack(gamestate,gamestate.ai_state,gamestate.opponent_state) 
+        if is_ai_2:    
+            util2.do_attack(gamestate,gamestate.opponent_state,gamestate.ai_state)    
             
-        else:
-            #util1.do_model_attack(gamestate,gamestate.ai_state,gamestate.opponent_state) 
-            util2.do_model_attack(gamestate,gamestate.opponent_state,gamestate.ai_state)    
-            util1.do_model_attack(gamestate,gamestate.opponent_state,gamestate.ai_state)    
-
     #If we're at the character select screen, choose our character
     elif gamestate.menu_state == melee.enums.Menu.CHARACTER_SELECT:
         if is_ai:
