@@ -17,7 +17,7 @@ class Logger:
             'Opponent_Action','Opponent_Action_Num' ,'AI_Action','AI_Action_Num', 
             'Opponent_Action_Frame', 'AI_Action_Frame','Opponent_Jumps_Left', 'AI_Jumps_Left', 
             'Opponent_Stock', 'AI_Stock','Opponent_Percent', 'AI_Percent', 
-            'Opponent_Percent_Change', 'AI_Percent_Change', 
+            'Opponent_Percent_Change', 'AI_Percent_Change','Opponent_Stock_Change', 'AI_Stock_Change', 
             'Buttons Pressed', 'Buttons_Pressed_Converted' ,'Notes', 'Frame Process Time']
         self.writer = csv.DictWriter(self.csvfile, fieldnames=fieldnames, extrasaction='ignore')
         self.current_row = dict()
@@ -28,6 +28,8 @@ class Logger:
         # These needed to be shifted up 1
         self.past_opponent_percent=0
         self.past_ai_percent=0
+        self.past_opponent_stock=0
+        self.past_ai_stock=0
 
     def log(self, column, contents, concat=False):
         #Should subsequent logs be cumulative?
@@ -44,6 +46,8 @@ class Logger:
         if gamestate.menu_state not in [Menu.IN_GAME, Menu.SUDDEN_DEATH]:
             self.past_opponent_percent = 0
             self.past_ai_percent = 0
+            self.past_opponent_stock = 3
+            self.past_ai_stock = 3
         ai_state = gamestate.ai_state
         opponent_state = gamestate.opponent_state
 
@@ -52,8 +56,8 @@ class Logger:
         self.log('Opponent_y', str(opponent_state.y))
         self.log('AI_x', str(ai_state.x))
         self.log('AI_y', str(ai_state.y))
-        self.log('Opponent_Facing', str(opponent_state.facing))
-        self.log('AI_Facing', str(ai_state.facing))
+        self.log('Opponent_Facing', opponent_state.facing)
+        self.log('AI_Facing', ai_state.facing)
         self.log('Opponent_Action', str(opponent_state.action))
         self.log('Opponent_Action_Num', str(Action(opponent_state.action).value))
         self.log('AI_Action', str(ai_state.action))
@@ -68,8 +72,12 @@ class Logger:
         self.log('AI_Percent', str(ai_state.percent))
         self.log('Opponent_Percent_Change', str(opponent_state.percent-self.past_opponent_percent))
         self.log('AI_Percent_Change', str(ai_state.percent-self.past_ai_percent))
+        self.log('Opponent_Stock_Change', opponent_state.stock-self.past_opponent_stock)
+        self.log('AI_Stock_Change', ai_state.stock-self.past_ai_stock)
         self.past_opponent_percent=opponent_state.percent
         self.past_ai_percent=ai_state.percent
+        self.past_opponent_stock=opponent_state.stock
+        self.past_ai_stock=ai_state.stock
 
     def write_frame(self):
         self.rows.append(self.current_row)

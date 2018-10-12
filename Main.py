@@ -4,6 +4,7 @@ import config
 import util
 import logger
 import menuhelper
+import objgraph
 import argparse
 import signal
 import sys
@@ -176,11 +177,13 @@ while True:
         log.log_frame(gamestate)
         log.write_frame()
         data_frame+=1
-        if data_frame>=10000:
+        if data_frame>=1000:
+            objgraph.show_growth(limit=3)
             log.write_log()
+            loss=util1.train(log.rows)
             log.rows.clear()
             total_data_frames+=data_frame
-            print("Total Frames collected so far:",total_data_frames)
+            print("Total Frames collected so far:",total_data_frames,"Current Loss",str(loss))
             data_frame=0
 
             

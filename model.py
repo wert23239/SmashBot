@@ -64,7 +64,7 @@ def linear_model(df):
     json_string = model.to_json()
     with open("model_fake.json", "w") as json_file:
         json_file.write(json_string)
-        model.save_weights('model3.h5')  
+        model.save_weights('model_fake.h5')  
 
 
 def as_keras_metric(method):
