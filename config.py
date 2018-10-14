@@ -9,12 +9,15 @@ class ModelType(Enum):
     BINARY = 1
     REGRESSION = 2
 
+MODEL_PREFIX="Models/"
+JSON_SUFFIX=".json"
+WEIGHTS_SUFFIX=".h5"
 
 class Config():
 
-    def __init__(self,model_stucture=None,model_weights=None,model_type=ModelType.RANDOM):
-        self.model_stucture=model_stucture
-        self.model_weights=model_weights
+    def __init__(self,model_file_name,model_type=ModelType.RANDOM):
+        self.model_stucture=MODEL_PREFIX+model_file_name+JSON_SUFFIX
+        self.model_weights=MODEL_PREFIX+model_file_name+WEIGHTS_SUFFIX
         if model_type==ModelType.RANDOM:
             self.model_predict=self.random_attack
         elif model_type==ModelType.BINARY:

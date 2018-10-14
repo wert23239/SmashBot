@@ -9,6 +9,7 @@ import pandas
 import tensorflow as tf
 import numpy as np
 
+
 def main():
     linear=True
     df=preprocess(linear)
@@ -60,7 +61,7 @@ def linear_model(df):
     recall = as_keras_metric(tf.metrics.recall)
     model.compile(optimizer="Adam", loss='binary_crossentropy', metrics=['accuracy',precision,recall])
     # Train model
-    history=model.fit([X_train,action_train], Y_train, epochs=100,validation_split=.2,verbose=1)
+    history=model.fit([X_train,action_train], Y_train, epochs=3,validation_split=.2,verbose=1)
     json_string = model.to_json()
     with open("model_fake.json", "w") as json_file:
         json_file.write(json_string)

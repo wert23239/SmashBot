@@ -2,11 +2,13 @@ import melee
 import pandas as pd
 import numpy as np
 import random
-import objgraph
+from pathlib import Path
 from melee import Button
 from melee.enums import Action
 from keras_pandas.Automater import Automater
 from keras.models import model_from_json
+
+
 class Util:
 
     def __init__(self,logger=None,controller=None,config=None):
@@ -21,6 +23,7 @@ class Util:
         self.endE=.01
         self.e=1.0
         self.config=config
+        self.action_set=set()
         if config:
             self.create_model()
        
@@ -31,7 +34,8 @@ class Util:
         json_file.close()
         self.model = model_from_json(loaded_model_json)
         self.model.compile(optimizer="Adam", loss='mae')
-        #self.model.load_weights(self.config.model_weights)
+        if Path(self.config.model_weights).is_file():
+            self.model.load_weights(self.config.model_weights)
 
     def do_attack(self,gamestate,ai_state,opponent_state):
         processed_input,processed_action = (
@@ -41,6 +45,7 @@ class Util:
             action=random.randint(0,149)
         else:
             action=self.config.model_predict(self.model,processed_input,processed_action)
+            self.action_set.add(action)
        
         x_cord,y_cord,button_choice=self.unconvert_attack(action)
 
@@ -64,10 +69,19 @@ class Util:
     
     def train(self,rows):
         Y_train,X_train,action_train=self.preprocess_rows(rows)
-        history=self.model.fit([X_train,action_train], Y_train,batch_size=32, epochs=10,validation_split=.2,verbose=0)
+        history=self.model.fit([X_train,action_train], Y_train,batch_size=128, epochs=3,validation_split=.1,verbose=0)
+        self.save_model()
         if self.e>self.endE:
             self.e=self.e-.005
-        return history.history['val_loss'][-1]
+        action_size=len(self.action_set)
+        self.action_set.clear()
+        return history.history['val_loss'][-1],self.e,action_size
+
+    def save_model(self):
+        json_string = self.model.to_json()
+        with open(self.config.model_stucture,'w') as json_file:
+            json_file.write(json_string)
+        self.model.save_weights(self.config.model_weights)
 
     def preprocess_rows(self,rows):
         df=pd.DataFrame.from_dict(rows)
@@ -78,7 +92,12 @@ class Util:
         df.drop(len(df)-1,inplace=True)
 
         #reward
-        df['target'] = df.apply (lambda row: (int(row["AI_Percent_Change"])>0)*-.1+(int(row["AI_Stock_Change"])<0)*-1,axis=1)
+        df['target'] = df.apply (lambda row: (
+                                            (int(row["AI_Percent_Change"])>0)*-.1+
+                                            (int(row["AI_Stock_Change"])<0)*-1+
+                                            (int(row["Opponent_Percent_Change"])>0)*.1+
+                                            (int(row["Opponent_Stock_Change"])<0)*1
+                                            ),axis=1)
         
         df[["Opponent_Facing", "AI_Facing","target"]] *= 1
         discount_factor=.99

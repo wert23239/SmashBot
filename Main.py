@@ -8,6 +8,7 @@ import objgraph
 import argparse
 import signal
 import sys
+import experience_replay
 
 #This example program demonstrates how to use the Melee API to run dolphin programatically,
 #   setup controllers, and send button presses over to dolphin
@@ -99,12 +100,12 @@ is_ai_2=False
 if is_ai:
     util1=util.Util(dolphin.logger,
                     controller1,
-                    config.Config('model3.json',"model3.h5",config.ModelType.BINARY))
+                    config.Config('current_model',config.ModelType.BINARY))
 
 if is_ai_2:                    
     util2=util.Util(dolphin.logger,
                     controller2,
-                    config.Config('model3.json',"model3.h5",config.ModelType.BINARY))
+                    config.Config('model3',config.ModelType.BINARY))
 
 if is_ai==True and is_ai_2==True:
     score1,score2=0,0
@@ -112,6 +113,8 @@ if is_ai==True and is_ai_2==True:
 
 data_frame=0
 total_data_frames=0
+episode_size=1000
+buffer=experience_replay.ExperienceReplay(episode_size*10)
 #Main loop
 while True:
     #"step" to the next frame
@@ -177,13 +180,16 @@ while True:
         log.log_frame(gamestate)
         log.write_frame()
         data_frame+=1
-        if data_frame>=1000:
+        if data_frame>=episode_size:
             objgraph.show_growth(limit=3)
             log.write_log()
-            loss=util1.train(log.rows)
+            loss,epsilon,action_size=util1.train(log.rows+buffer.sample(episode_size))
+            buffer.extend(log.rows)
             log.rows.clear()
             total_data_frames+=data_frame
             print("Total Frames collected so far:",total_data_frames,"Current Loss",str(loss))
+            print("Current Random Rate:", epsilon,"Action Size:", action_size)
+            print()
             data_frame=0
 
             

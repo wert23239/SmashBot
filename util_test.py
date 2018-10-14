@@ -3,6 +3,7 @@ import melee
 from melee.enums import Action
 import util
 import logger
+import experience_replay
 class UtilTest(unittest.TestCase):
    
     def test_util_convert(self):
@@ -20,11 +21,11 @@ class UtilTest(unittest.TestCase):
         x_cord,y_cord,button_choice=utils.unconvert_attack(4)
         self.assertEqual(x_cord,1)
         self.assertEqual(y_cord,0)
-        self.assertEqual(button_choice,melee.Button.BUTTON_A)
+        self.assertEqual(button_choice,None)
         x_cord,y_cord,button_choice=utils.unconvert_attack(5)
         self.assertEqual(x_cord,0)
         self.assertEqual(y_cord,.25)
-        self.assertEqual(button_choice,melee.Button.BUTTON_A)
+        self.assertEqual(button_choice,None)
         x_cord,y_cord,button_choice=utils.unconvert_attack(26)
         self.assertEqual(x_cord,.25)
         self.assertEqual(y_cord,0)
@@ -64,13 +65,20 @@ class UtilTest(unittest.TestCase):
         reward_row["AI_Stock_Change"]=-1
         rows = [self.create_fake_row(),self.create_fake_row(),self.create_fake_row(),reward_row]
         Y_train,X_train,action_train=utils.preprocess_rows(rows)
-        print(X_train)
-        print(Y_train)
         self.assertEqual(3,len(Y_train))
         self.assertEqual(Y_train[0],-.99**2)
         self.assertEqual(Y_train[1],-.99)
         self.assertEqual(Y_train[2],-1)
         self.assertEqual(len(X_train[0]),17)
+
+    def test_buffer(self):
+        buffer = experience_replay.ExperienceReplay(5)
+        buffer.extend([1,2,3])
+        self.assertEqual(len(buffer.buffer),3)
+        buffer.extend([4,5,6])
+        self.assertEqual(buffer.buffer,[4,5,6,1,2])
+        self.assertEqual(buffer.sample(10),[4,5,6,1,2])
+        self.assertEqual(len(buffer.sample(2)),2)
 
 if __name__ == '__main__':
     unittest.main()
