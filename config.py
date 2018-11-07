@@ -1,5 +1,5 @@
 import random
-
+import os
 from melee import Button
 from enum import Enum, unique
 from numpy import argmax
@@ -15,9 +15,11 @@ WEIGHTS_SUFFIX=".h5"
 
 class Config():
 
-    def __init__(self,model_file_name,model_type=ModelType.RANDOM):
+    def __init__(self,model_file_name,delete_weights=False,model_type=ModelType.RANDOM):
         self.model_stucture=MODEL_PREFIX+model_file_name+JSON_SUFFIX
         self.model_weights=MODEL_PREFIX+model_file_name+WEIGHTS_SUFFIX
+        if delete_weights and os.path.exists(self.model_weights):
+            os.remove(self.model_weights)
         if model_type==ModelType.RANDOM:
             self.model_predict=self.random_attack
         elif model_type==ModelType.BINARY:

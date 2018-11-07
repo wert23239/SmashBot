@@ -36,13 +36,13 @@ parser.add_argument('--debug', '-d',default=True, action='store_true',
                     help='Debug mode. Creates a CSV of all game state')
 parser.add_argument('--framerecord', '-r', default=False, action='store_true',
                     help='(DEVELOPMENT ONLY) Records frame data from the match, stores into framedata.csv.')
-
+parser.add_argument('--new', '-n', default=False,
+                    help='Delete Current Model')
 args = parser.parse_args()
 
 log = None
 if args.debug:
     log = logger.Logger()
-
 framedata = melee.framedata.FrameData(args.framerecord)
 
 #Options here are:
@@ -100,12 +100,12 @@ is_ai_2=False
 if is_ai:
     util1=util.Util(dolphin.logger,
                     controller1,
-                    config.Config('current_model',config.ModelType.BINARY))
+                    config.Config('current_model',args.new,config.ModelType.BINARY))
 
 if is_ai_2:                    
     util2=util.Util(dolphin.logger,
                     controller2,
-                    config.Config('model3',config.ModelType.BINARY))
+                    config.Config('model3',args.new,config.ModelType.BINARY))
 
 if is_ai==True and is_ai_2==True:
     score1,score2=0,0
@@ -119,9 +119,6 @@ buffer=experience_replay.ExperienceReplay(episode_size*10)
 while True:
     #"step" to the next frame
     gamestate.step()
-    if(gamestate.processingtime * 1000 > 12):
-        pass
-        #print("WARNING: Last frame took " + str(gamestate.processingtime*1000) + "ms to process.")
 
     if gamestate.menu_state in [melee.enums.Menu.IN_GAME, melee.enums.Menu.SUDDEN_DEATH]:
         if is_ai:

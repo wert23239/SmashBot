@@ -35,6 +35,7 @@ class Util:
         self.model = model_from_json(loaded_model_json)
         self.model.compile(optimizer="Adam", loss='mae')
         if Path(self.config.model_weights).is_file():
+            print("Loading Model...")
             self.model.load_weights(self.config.model_weights)
 
     def do_attack(self,gamestate,ai_state,opponent_state):
